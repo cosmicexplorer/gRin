@@ -22,7 +22,7 @@ void print_array(T * arr, size_t size) {
 }
 
 int main() {
-  ring::ring_queue<int> r;
+  grin::ring_queue<int> r;
   int test_arr_in[] = {1, 2, 3};
   r.push_range(test_arr_in, 3);
   assert(r.size() == 3);

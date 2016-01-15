@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <memory>
 
-namespace ring {
+namespace grin {
 template <typename T>
 class ring_queue {
 private:

@@ -3,7 +3,7 @@
 
 #include <algorithm>
 
-namespace ring {
+namespace grin {
 template <typename T>
 size_t ring_queue<T>::calc_new_max_size(size_t cur_size, size_t must_hold) {
   if (0 == cur_size) { return must_hold; }
