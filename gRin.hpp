@@ -37,6 +37,6 @@ public:
 };
 }
 
-#include "ring.tpp"
+#include "gRin.tpp"
 
 #endif /* ___RING_BUF_H___ */

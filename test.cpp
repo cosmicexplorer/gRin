@@ -1,6 +1,6 @@
 #include <cassert>
 #include <iostream>
-#include "ring.hpp"
+#include "gRin.hpp"
 
 template <typename InputIterator>
 bool array_eq(InputIterator arr1,
