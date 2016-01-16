@@ -1,10 +1,7 @@
 #ifndef ___RING_BUF_H___
 #define ___RING_BUF_H___
 
-#include <stdexcept>
-#include <memory>
-
-namespace grin {
+namespace gRin {
 template <typename T>
 class ring_queue {
 private:
@@ -16,22 +13,26 @@ private:
   bool empty;
 
   inline size_t calc_new_max_size(size_t, size_t);
-  size_t pull_or_peek(T *, size_t, bool);
 
 public:
   ring_queue(size_t = INITIAL_SIZE);
   ~ring_queue();
+  explicit ring_queue(const ring_queue &);
 
   constexpr static size_t INITIAL_SIZE  = 1000;
   constexpr static double GROWTH_FACTOR = 1.5;
 
-  /* important new stuff */
-  void push_range(T *, size_t);
-  inline size_t pull_range(T *, size_t);
-  inline size_t peek_range(T *, size_t);
+  /* need to know breadth of range inserted, so don't offer push_range without
+     knowing how many elements need to be inserted */
+  template <typename InputIterator>
+  void push_range(InputIterator, size_t);
 
-  /* TODO: add basic stl stuff */
-  size_t size() const;
+  template <typename OutputIterator>
+  size_t pull_range(OutputIterator, size_t);
+  template <typename OutputIterator>
+  size_t peek_range(OutputIterator, size_t) const;
+
+  inline size_t size() const noexcept;
   size_t resize(size_t);
 };
 }

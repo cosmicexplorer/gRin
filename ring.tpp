@@ -3,7 +3,7 @@
 
 #include <algorithm>
 
-namespace grin {
+namespace gRin {
 template <typename T>
 size_t ring_queue<T>::calc_new_max_size(size_t cur_size, size_t must_hold) {
   if (0 == cur_size) { return must_hold; }
@@ -21,9 +21,22 @@ ring_queue<T>::~ring_queue() {
   delete[] ring;
 }
 
+template <typename T>
+ring_queue<T>::ring_queue(const ring_queue & other)
+    : ring(nullptr), max(0), bot(0), top(0), empty(true) {
+  size_t other_size = other.size();
+  if (other_size > 0) {
+    ring = new T[other_size];
+    max = other_size;
+    other.peek_range(ring, other_size);
+    empty = false;
+  }
+}
+
 /* always resets the bottom of ring to 0 when reallocating */
 template <typename T>
-void ring_queue<T>::push_range(T * in, size_t num) {
+template <typename InputIterator>
+void ring_queue<T>::push_range(InputIterator in, size_t num) {
   if (num == 0) { return; }
   /* if empty, can assume bot, top == 0 */
   if (empty) {
@@ -75,16 +88,18 @@ void ring_queue<T>::push_range(T * in, size_t num) {
 }
 
 template <typename T>
-size_t ring_queue<T>::pull_or_peek(T * out, size_t num, bool do_modify) {
+template <typename OutputIterator>
+size_t ring_queue<T>::pull_range(OutputIterator out, size_t num) {
   if (0 == num) { return 0; }
   if (empty) { return 0; }
   if (bot < top) {
     size_t old_size = top - bot;
     if (old_size < num) { num = old_size; }
     std::copy_n(ring + bot, num, out);
-    if (do_modify) {
-      bot += num;
-      if (bot == top) { empty = true; }
+    bot += num;
+    if (bot == top) {
+      bot = top = 0;
+      empty = true;
     }
     return num;
   } else {
@@ -95,26 +110,41 @@ size_t ring_queue<T>::pull_or_peek(T * out, size_t num, bool do_modify) {
     std::copy_n(ring + bot, used_at_top, out);
     /* copy from bottom */
     std::copy_n(ring, top, out + used_at_top);
-    if (do_modify) {
-      bot = (bot + num) % max;
-      if (bot == top) { empty = true; }
+    bot = (bot + num) % max;
+    if (bot == top) {
+      bot = top = 0;
+      empty = true;
     }
     return num;
   }
 }
 
+/* same as pull_range, without modifying member variables. unfortunate code
+   duplication */
 template <typename T>
-size_t ring_queue<T>::pull_range(T * out, size_t num) {
-  return pull_or_peek(out, num, true);
+template <typename OutputIterator>
+size_t ring_queue<T>::peek_range(OutputIterator out, size_t num) const {
+  if (0 == num) { return 0; }
+  if (empty) { return 0; }
+  if (bot < top) {
+    size_t old_size = top - bot;
+    if (old_size < num) { num = old_size; }
+    std::copy_n(ring + bot, num, out);
+    return num;
+  } else {
+    size_t old_size    = max - bot - top;
+    size_t used_at_top = max - bot;
+    if (old_size < num) { num = old_size; }
+    /* copy from top */
+    std::copy_n(ring + bot, used_at_top, out);
+    /* copy from bottom */
+    std::copy_n(ring, top, out + used_at_top);
+    return num;
+  }
 }
 
 template <typename T>
-size_t ring_queue<T>::peek_range(T * out, size_t num) {
-  return pull_or_peek(out, num, false);
-}
-
-template <typename T>
-size_t ring_queue<T>::size() const {
+size_t ring_queue<T>::size() const noexcept {
   if (empty) { return 0; }
   if (bot < top) { return top - bot; }
   return max - bot - top;
