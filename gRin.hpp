@@ -34,6 +34,7 @@ public:
 
   inline size_t size() const noexcept;
   size_t resize(size_t);
+  inline bool empty() const noexcept;
 };
 }
 

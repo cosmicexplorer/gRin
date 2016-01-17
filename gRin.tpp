@@ -171,6 +171,8 @@ size_t ring_queue<T>::resize(size_t fin) {
   delete[] new_ring;
   return max;
 }
+
+bool ring_queue::empty() const noexcept { return empty; }
 }
 
 #endif /* ___RING_BUF_TPP___ */
