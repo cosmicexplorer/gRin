@@ -14,7 +14,7 @@ size_t ring_queue<T>::calc_new_max_size(size_t cur_size, size_t must_hold) {
 
 template <typename T>
 ring_queue<T>::ring_queue(size_t size)
-    : ring(new T[size]), max(size), bot(0), top(0), empty(true) {}
+    : ring(new T[size]), max(size), bot(0), top(0), is_empty(true) {}
 
 template <typename T>
 ring_queue<T>::~ring_queue() {
@@ -23,13 +23,13 @@ ring_queue<T>::~ring_queue() {
 
 template <typename T>
 ring_queue<T>::ring_queue(const ring_queue & other)
-    : ring(nullptr), max(0), bot(0), top(0), empty(true) {
+    : ring(nullptr), max(0), bot(0), top(0), is_empty(true) {
   size_t other_size = other.size();
   if (other_size > 0) {
     ring = new T[other_size];
     max = other_size;
     other.peek_range(ring, other_size);
-    empty = false;
+    is_empty = false;
   }
 }
 
@@ -38,8 +38,8 @@ template <typename T>
 template <typename InputIterator>
 void ring_queue<T>::push_range(InputIterator in, size_t num) {
   if (num == 0) { return; }
-  /* if empty, can assume bot, top == 0 */
-  if (empty) {
+  /* if is_empty, can assume bot, top == 0 */
+  if (is_empty) {
     /* number of free elems == max */
     if (max >= num) {
       std::copy_n(in, num, ring);
@@ -84,14 +84,14 @@ void ring_queue<T>::push_range(InputIterator in, size_t num) {
       }
     }
   }
-  empty = false;
+  is_empty = false;
 }
 
 template <typename T>
 template <typename OutputIterator>
 size_t ring_queue<T>::pull_range(OutputIterator out, size_t num) {
   if (0 == num) { return 0; }
-  if (empty) { return 0; }
+  if (is_empty) { return 0; }
   if (bot < top) {
     size_t old_size = top - bot;
     if (old_size < num) { num = old_size; }
@@ -99,7 +99,7 @@ size_t ring_queue<T>::pull_range(OutputIterator out, size_t num) {
     bot += num;
     if (bot == top) {
       bot = top = 0;
-      empty = true;
+      is_empty = true;
     }
     return num;
   } else {
@@ -113,7 +113,7 @@ size_t ring_queue<T>::pull_range(OutputIterator out, size_t num) {
     bot = (bot + num) % max;
     if (bot == top) {
       bot = top = 0;
-      empty = true;
+      is_empty = true;
     }
     return num;
   }
@@ -125,7 +125,7 @@ template <typename T>
 template <typename OutputIterator>
 size_t ring_queue<T>::peek_range(OutputIterator out, size_t num) const {
   if (0 == num) { return 0; }
-  if (empty) { return 0; }
+  if (is_empty) { return 0; }
   if (bot < top) {
     size_t old_size = top - bot;
     if (old_size < num) { num = old_size; }
@@ -145,7 +145,7 @@ size_t ring_queue<T>::peek_range(OutputIterator out, size_t num) const {
 
 template <typename T>
 size_t ring_queue<T>::size() const noexcept {
-  if (empty) { return 0; }
+  if (is_empty) { return 0; }
   if (bot < top) { return top - bot; }
   return max - bot - top;
 }
@@ -172,7 +172,10 @@ size_t ring_queue<T>::resize(size_t fin) {
   return max;
 }
 
-bool ring_queue::empty() const noexcept { return empty; }
+template <typename T>
+bool ring_queue<T>::empty() const noexcept {
+  return is_empty;
+}
 }
 
 #endif /* ___RING_BUF_TPP___ */

@@ -10,7 +10,7 @@ private:
   size_t bot;
   /* one past the end */
   size_t top;
-  bool empty;
+  bool is_empty;
 
   inline size_t calc_new_max_size(size_t, size_t);
 
