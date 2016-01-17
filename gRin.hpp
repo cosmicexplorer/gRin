@@ -20,7 +20,10 @@ private:
 public:
   explicit ring_queue(size_t = INITIAL_SIZE);
   ~ring_queue();
+  /* consider adding move constructor / assignment */
   explicit ring_queue(const ring_queue &);
+  ring_queue & operator=(const ring_queue &);
+  void swap(ring_queue &) noexcept;
 
   /* need to know breadth of range inserted, so don't offer push_range without
      knowing how many elements need to be inserted */
@@ -36,6 +39,11 @@ public:
   size_t resize(size_t);
   inline bool empty() const noexcept;
 };
+}
+
+namespace std {
+template <typename T>
+inline void swap(gRin::ring_queue<T> &, gRin::ring_queue<T> &) noexcept;
 }
 
 #include "gRin.tpp"

@@ -22,7 +22,7 @@ ring_queue<T>::~ring_queue() {
 }
 
 template <typename T>
-ring_queue<T>::ring_queue(const ring_queue & other)
+ring_queue<T>::ring_queue(const ring_queue<T> & other)
     : ring(nullptr), max(0), bot(0), top(0), is_empty(true) {
   size_t other_size = other.size();
   if (other_size > 0) {
@@ -31,6 +31,24 @@ ring_queue<T>::ring_queue(const ring_queue & other)
     other.peek_range(ring, other_size);
     is_empty = false;
   }
+}
+
+template <typename T>
+ring_queue<T> & ring_queue<T>::operator=(const ring_queue<T> & rhs) {
+  if (this != &rhs) {
+    ring_queue<T> copy(rhs);
+    swap(copy);
+  }
+  return *this;
+}
+
+template <typename T>
+void ring_queue<T>::swap(ring_queue<T> & rhs) noexcept {
+  std::swap(ring, rhs.ring);
+  std::swap(max, rhs.max);
+  std::swap(bot, rhs.bot);
+  std::swap(top, rhs.top);
+  std::swap(is_empty, rhs.is_empty);
 }
 
 /* always resets the bottom of ring to 0 when reallocating */
@@ -177,6 +195,13 @@ size_t ring_queue<T>::resize(size_t fin) {
 template <typename T>
 bool ring_queue<T>::empty() const noexcept {
   return is_empty;
+}
+}
+
+namespace std {
+template <typename T>
+void swap(gRin::ring_queue<T> & lhs, gRin::ring_queue<T> & rhs) noexcept {
+  lhs.swap(rhs);
 }
 }
 

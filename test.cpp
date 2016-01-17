@@ -71,8 +71,27 @@ void make_full(ring_queue<T> & q) {
   assert(q.size() == q.max);
 }
 
+void copy_equals_test() {
+  ring_queue<int> r;
+  int in[] = {1, 2, 3, 4, 5};
+  r.push_range(in, 5);
+  ring_queue<int> s(r);
+  ring_queue<int> t;
+  int out[5];
+  s.peek_range(out, 5);
+  assert(array_eq(in, 5, out, 5));
+  t = r;
+  t.peek_range(out, 5);
+  assert(array_eq(in, 5, out, 5));
+  t = s;
+  t.peek_range(out, 5);
+  assert(array_eq(in, 5, out, 5));
+}
+
 void push_pull_test() {
   ring_queue<int> r(10);
+  ring_queue<int> s;
+  s = r;
 }
 
 void peek_range_test() {
@@ -131,5 +150,6 @@ int main() {
   empty_test();
   size_resize_test();
   peek_range_test();
+  copy_equals_test();
   push_pull_test();
 }
