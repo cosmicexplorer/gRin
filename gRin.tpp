@@ -7,7 +7,7 @@ namespace gRin {
 template <typename T>
 size_t ring_queue<T>::calc_new_max_size(size_t cur_size, size_t must_hold) {
   if (0 == cur_size) { return must_hold; }
-  size_t newmax = (size_t)(cur_size * GROWTH_FACTOR);
+  size_t newmax = (size_t)((double) (cur_size) *GROWTH_FACTOR);
   if (newmax < must_hold) { return must_hold; }
   return newmax;
 }
@@ -78,7 +78,7 @@ void ring_queue<T>::push_range(InputIterator in, size_t num) {
         top += num;
       } else {
         /* free_elems < num (reallocate) */
-        size_t old_size = max - bot - top;
+        size_t old_size = max - (bot - top);
         resize(old_size + num);
         push_range(in, num);
       }
@@ -103,7 +103,7 @@ size_t ring_queue<T>::pull_range(OutputIterator out, size_t num) {
     }
     return num;
   } else {
-    size_t old_size    = max - bot - top;
+    size_t old_size    = max - (bot - top);
     size_t used_at_top = max - bot;
     if (old_size < num) { num = old_size; }
     /* copy from top */
@@ -132,7 +132,7 @@ size_t ring_queue<T>::peek_range(OutputIterator out, size_t num) const {
     std::copy_n(ring + bot, num, out);
     return num;
   } else {
-    size_t old_size    = max - bot - top;
+    size_t old_size    = max - (bot - top);
     size_t used_at_top = max - bot;
     if (old_size < num) { num = old_size; }
     /* copy from top */
@@ -147,7 +147,7 @@ template <typename T>
 size_t ring_queue<T>::size() const noexcept {
   if (is_empty) { return 0; }
   if (bot < top) { return top - bot; }
-  return max - bot - top;
+  return max - (bot - top);
 }
 
 /* resets bot to 0 */
@@ -157,12 +157,14 @@ size_t ring_queue<T>::resize(size_t fin) {
   size_t new_max  = calc_new_max_size(max, fin);
   size_t old_size = size();
   T * new_ring = new T[new_max];
-  if (bot < top) {
-    std::copy_n(ring + bot, top - bot, new_ring);
-  } else {
-    size_t used_at_top = max - bot;
-    std::copy_n(ring + bot, used_at_top, new_ring);
-    std::copy_n(ring, top, new_ring + used_at_top);
+  if (!is_empty) {
+    if (bot < top) {
+      std::copy_n(ring + bot, top - bot, new_ring);
+    } else {
+      size_t used_at_top = max - bot;
+      std::copy_n(ring + bot, used_at_top, new_ring);
+      std::copy_n(ring, top, new_ring + used_at_top);
+    }
   }
   std::swap(ring, new_ring);
   max = new_max;
