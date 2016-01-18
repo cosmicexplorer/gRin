@@ -74,7 +74,7 @@ void ring_queue<T>::push_range(InputIterator in, size_t num) {
         top += num;
       } else {
         /* free_at_top < num */
-        size_t free_elems = max - free_at_top + bot;
+        size_t free_elems = free_at_top + bot;
         size_t old_size = top - bot;
         if (free_elems >= num) {
           /* wraparound */
