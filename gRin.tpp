@@ -52,8 +52,7 @@ void ring_queue<T>::swap(ring_queue<T> & rhs) noexcept {
 }
 
 template <typename T>
-template <typename InputIterator>
-void ring_queue<T>::push_range(const InputIterator in, size_t num) {
+void ring_queue<T>::push_range(const T * __restrict__ in, size_t num) {
   if (num == 0) { return; }
   /* if is_empty, can assume bot, top == 0 */
   if (is_empty) {
@@ -105,8 +104,7 @@ void ring_queue<T>::push_range(const InputIterator in, size_t num) {
 }
 
 template <typename T>
-template <typename OutputIterator>
-size_t ring_queue<T>::pull_range(OutputIterator out, size_t num) {
+size_t ring_queue<T>::pull_range(T * __restrict__ out, size_t num) {
   if (0 == num) { return 0; }
   if (is_empty) { return 0; }
   if (bot < top) {
@@ -139,8 +137,7 @@ size_t ring_queue<T>::pull_range(OutputIterator out, size_t num) {
 /* same as pull_range, without modifying member variables. unfortunate code
    duplication */
 template <typename T>
-template <typename OutputIterator>
-size_t ring_queue<T>::peek_range(OutputIterator out, size_t num) const {
+size_t ring_queue<T>::peek_range(T * __restrict__ out, size_t num) const {
   if (0 == num) { return 0; }
   if (is_empty) { return 0; }
   if (bot < top) {
@@ -171,9 +168,9 @@ size_t ring_queue<T>::size() const noexcept {
 template <typename T>
 size_t ring_queue<T>::resize(size_t fin) {
   if (fin <= max) { return max; }
-  size_t new_max  = calc_new_max_size(max, fin);
-  size_t old_size = size();
-  T * new_ring = new T[new_max];
+  size_t new_max            = calc_new_max_size(max, fin);
+  size_t old_size           = size();
+  T * __restrict__ new_ring = new T[new_max];
   if (!is_empty) {
     if (bot < top) {
       std::copy_n(ring + bot, top - bot, new_ring);
