@@ -118,24 +118,30 @@ size_t ring_queue<T>::pull_range(T * __restrict__ out, size_t num) {
     }
     return num;
   } else {
-    size_t old_size    = max - (bot - top);
     size_t used_at_top = max - bot;
+    size_t old_size = used_at_top + top;
     if (old_size < num) { num = old_size; }
-    /* copy from top */
-    std::copy_n(ring + bot, used_at_top, out);
-    /* copy from bottom */
-    std::copy_n(ring, top, out + used_at_top);
-    bot = (bot + num) % max;
-    if (bot == top) {
-      bot = top = 0;
-      is_empty = true;
+    if (used_at_top <= num) {
+      std::copy_n(ring + bot, num, out);
+      bot = (bot + num) % max;
+    } else {
+      /* used_at_top > num */
+      /* copy from top */
+      std::copy_n(ring + bot, used_at_top, out);
+      /* copy from bottom */
+      std::copy_n(ring, num - used_at_top, out + used_at_top);
+      bot = (bot + num) % max;
+      if (bot == top) {
+        bot = top = 0;
+        is_empty = true;
+      }
     }
     return num;
   }
 }
 
 /* same as pull_range, without modifying member variables. unfortunate code
-   duplication */
+ duplication */
 template <typename T>
 size_t ring_queue<T>::peek_range(T * __restrict__ out, size_t num) const {
   if (0 == num) { return 0; }
@@ -146,13 +152,18 @@ size_t ring_queue<T>::peek_range(T * __restrict__ out, size_t num) const {
     std::copy_n(ring + bot, num, out);
     return num;
   } else {
-    size_t old_size    = max - (bot - top);
     size_t used_at_top = max - bot;
+    size_t old_size = used_at_top + top;
     if (old_size < num) { num = old_size; }
-    /* copy from top */
-    std::copy_n(ring + bot, used_at_top, out);
-    /* copy from bottom */
-    std::copy_n(ring, top, out + used_at_top);
+    if (used_at_top <= num) {
+      std::copy_n(ring + bot, num, out);
+    } else {
+      /* used_at_top > num */
+      /* copy from top */
+      std::copy_n(ring + bot, used_at_top, out);
+      /* copy from bottom */
+      std::copy_n(ring, num - used_at_top, out + used_at_top);
+    }
     return num;
   }
 }
