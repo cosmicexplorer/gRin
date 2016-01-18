@@ -51,7 +51,6 @@ void ring_queue<T>::swap(ring_queue<T> & rhs) noexcept {
   std::swap(is_empty, rhs.is_empty);
 }
 
-/* always resets the bottom of ring to 0 when reallocating */
 template <typename T>
 template <typename InputIterator>
 void ring_queue<T>::push_range(InputIterator in, size_t num) {

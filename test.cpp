@@ -90,8 +90,42 @@ void copy_equals_test() {
 
 void push_pull_test() {
   ring_queue<int> r(10);
-  ring_queue<int> s;
-  s = r;
+  /* bot < top */
+  int in[] = {1, 2, 3, 4, 5, 6};
+  /* free_at_top >= num */
+  r.push_range(in, 6);
+  assert(r.size() == 6);
+  assert(r.top == 6);
+  int out[6];
+  assert(r.peek_range(out, 6) == 6);
+  assert(array_eq(in, 6, out, 6));
+  assert(r.pull_range(out, 4) == 4);
+  assert(array_eq(in, 4, out, 4));
+  assert(r.bot == 4 and r.top == 6);
+  assert(r.size() == 2);
+  /* free_at_top < num */
+  r.push_range(in, 6);
+  assert(r.size() == 8);
+  assert(r.top == 2);
+  assert(r.bot == 4);
+  int tmp[] = {5, 6, 3, 4, 5, 6, 1, 2, 3, 4};
+  assert(array_eq(r.ring, 10, tmp, 10));
+  /* bot >= top */
+  ring_queue<int> s(r); /* copy ctor should restart from bottom */
+  assert(s.size() == 8);
+  int tmp_out[8];
+  assert(s.peek_range(tmp_out, 8) == 8);
+  assert(array_eq(s.ring, 8, tmp_out, 8));
+  /* free_elems >= num */
+  r.push_range(in, 1);
+  int tmp_check[] = {5, 6, 1, 4, 5, 6, 1, 2, 3, 4};
+  assert(array_eq(r.ring, 10, tmp_check, 10));
+  assert(r.bot == 4 and r.top == 3);
+  /* free_elems < num */
+  r.push_range(in, 6);
+  int fin_check[] = {5, 6, 1, 2, 3, 4, 5, 6, 1, 1, 2, 3, 4, 5, 6};
+  assert(array_eq(r.ring, 15, fin_check, 15));
+  assert(r.size() == 15);
 }
 
 void peek_range_test() {
