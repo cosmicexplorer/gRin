@@ -53,7 +53,7 @@ void ring_queue<T>::swap(ring_queue<T> & rhs) noexcept {
 
 template <typename T>
 template <typename InputIterator>
-void ring_queue<T>::push_range(InputIterator in, size_t num) {
+void ring_queue<T>::push_range(const InputIterator in, size_t num) {
   if (num == 0) { return; }
   /* if is_empty, can assume bot, top == 0 */
   if (is_empty) {
@@ -194,6 +194,11 @@ size_t ring_queue<T>::resize(size_t fin) {
 template <typename T>
 bool ring_queue<T>::empty() const noexcept {
   return is_empty;
+}
+
+template <typename T>
+void ring_queue<T>::push_back(const T & val) {
+  push_range(&val, 1);
 }
 }
 

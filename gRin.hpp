@@ -28,7 +28,7 @@ public:
   /* need to know breadth of range inserted, so don't offer push_range without
      knowing how many elements need to be inserted */
   template <typename InputIterator>
-  void push_range(InputIterator, size_t);
+  void push_range(const InputIterator, size_t);
 
   template <typename OutputIterator>
   size_t pull_range(OutputIterator, size_t);
@@ -38,6 +38,9 @@ public:
   inline size_t size() const noexcept;
   size_t resize(size_t);
   inline bool empty() const noexcept;
+
+  /* TODO: add basic stl stuff */
+  inline void push_back(const T &);
 };
 }
 
