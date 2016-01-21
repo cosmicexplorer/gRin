@@ -57,7 +57,7 @@ void ring_queue<T>::swap(ring_queue<T> & rhs) noexcept {
 template <typename T>
 void ring_queue<T>::push_range(const T * __restrict__ in, size_t num) {
   size_t num_bytes = num * sizeof(T);
-  if (num == 0) { return; }
+  if (0 == num) { return; }
   /* if is_empty, can assume bot, top == 0 */
   if (is_empty) {
     /* number of free elems == max */
@@ -74,7 +74,7 @@ void ring_queue<T>::push_range(const T * __restrict__ in, size_t num) {
       size_t free_at_top = max - top;
       if (free_at_top >= num) {
         memcpy(ring + top * sizeof(T), in, num_bytes);
-        top += num;
+        top = (top + num) % max;
       } else {
         /* free_at_top < num */
         size_t free_elems = free_at_top + bot;
@@ -96,7 +96,7 @@ void ring_queue<T>::push_range(const T * __restrict__ in, size_t num) {
       size_t free_elems = bot - top;
       if (free_elems >= num) {
         memcpy(ring + top * sizeof(T), in, num_bytes);
-        top += num;
+        top = (top + num) % max;
       } else {
         /* free_elems < num (reallocate) */
         size_t old_size = max - (bot - top);
@@ -127,11 +127,11 @@ size_t ring_queue<T>::pull_range(T * __restrict__ out, size_t num) {
     size_t used_at_top = max - bot, used_at_top_bytes = used_at_top * sizeof(T);
     size_t old_size = used_at_top + top;
     if (old_size < num) { num = old_size; }
-    if (used_at_top <= num) {
+    if (used_at_top >= num) {
       memcpy(out, ring + bot * sizeof(T), num_bytes);
       bot = (bot + num) % max;
     } else {
-      /* used_at_top > num */
+      /* used_at_top < num */
       /* copy from top */
       memcpy(out, ring + bot * sizeof(T), used_at_top_bytes);
       /* copy from bottom */
@@ -162,10 +162,10 @@ size_t ring_queue<T>::peek_range(T * __restrict__ out, size_t num) const {
     size_t used_at_top = max - bot, used_at_top_bytes = used_at_top * sizeof(T);
     size_t old_size = used_at_top + top;
     if (old_size < num) { num = old_size; }
-    if (used_at_top <= num) {
+    if (used_at_top >= num) {
       memcpy(out, ring + bot * sizeof(T), num_bytes);
     } else {
-      /* used_at_top > num */
+      /* used_at_top < num */
       /* copy from top */
       memcpy(out, ring + bot * sizeof(T), used_at_top_bytes);
       /* copy from bottom */
