@@ -2,6 +2,7 @@
 #define ___RING_BUF_TPP___
 
 #include <algorithm>
+#include <string.h>
 
 namespace gRin {
 template <typename T>
@@ -51,14 +52,17 @@ void ring_queue<T>::swap(ring_queue<T> & rhs) noexcept {
   std::swap(is_empty, rhs.is_empty);
 }
 
+/* TODO: use template specialization to accept arbitrary iterators in most
+   cases, but memmove on pointers, and memcpy on restrict pointers? */
 template <typename T>
 void ring_queue<T>::push_range(const T * __restrict__ in, size_t num) {
+  size_t num_bytes = num * sizeof(T);
   if (num == 0) { return; }
   /* if is_empty, can assume bot, top == 0 */
   if (is_empty) {
     /* number of free elems == max */
     if (max >= num) {
-      std::copy_n(in, num, ring);
+      memcpy(ring, in, num_bytes);
       top = num;
     } else {
       /* max < num (reallocate) */
@@ -69,16 +73,17 @@ void ring_queue<T>::push_range(const T * __restrict__ in, size_t num) {
     if (bot < top) {
       size_t free_at_top = max - top;
       if (free_at_top >= num) {
-        std::copy_n(in, num, ring + top);
+        memcpy(ring + top * sizeof(T), in, num_bytes);
         top += num;
       } else {
         /* free_at_top < num */
         size_t free_elems = free_at_top + bot;
+        size_t free_at_top_bytes = free_at_top * sizeof(T);
         size_t old_size = top - bot;
         if (free_elems >= num) {
           /* wraparound */
-          std::copy_n(in, free_at_top, ring + top);
-          std::copy_n(in + free_at_top, num - free_at_top, ring);
+          memcpy(ring + top * sizeof(T), in, free_at_top_bytes);
+          memcpy(ring, in + free_at_top_bytes, num_bytes - free_at_top_bytes);
           top = num - free_at_top;
         } else {
           /* free_elems < num (reallocate) */
@@ -90,7 +95,7 @@ void ring_queue<T>::push_range(const T * __restrict__ in, size_t num) {
       /* bot >= top */
       size_t free_elems = bot - top;
       if (free_elems >= num) {
-        std::copy_n(in, num, ring + top);
+        memcpy(ring + top * sizeof(T), in, num_bytes);
         top += num;
       } else {
         /* free_elems < num (reallocate) */
@@ -105,12 +110,13 @@ void ring_queue<T>::push_range(const T * __restrict__ in, size_t num) {
 
 template <typename T>
 size_t ring_queue<T>::pull_range(T * __restrict__ out, size_t num) {
+  size_t num_bytes = num * sizeof(T);
   if (0 == num) { return 0; }
   if (is_empty) { return 0; }
   if (bot < top) {
     size_t old_size = top - bot;
     if (old_size < num) { num = old_size; }
-    std::copy_n(ring + bot, num, out);
+    memcpy(out, ring + bot * sizeof(T), num_bytes);
     bot += num;
     if (bot == top) {
       bot = top = 0;
@@ -118,18 +124,18 @@ size_t ring_queue<T>::pull_range(T * __restrict__ out, size_t num) {
     }
     return num;
   } else {
-    size_t used_at_top = max - bot;
+    size_t used_at_top = max - bot, used_at_top_bytes = used_at_top * sizeof(T);
     size_t old_size = used_at_top + top;
     if (old_size < num) { num = old_size; }
     if (used_at_top <= num) {
-      std::copy_n(ring + bot, num, out);
+      memcpy(out, ring + bot * sizeof(T), num_bytes);
       bot = (bot + num) % max;
     } else {
       /* used_at_top > num */
       /* copy from top */
-      std::copy_n(ring + bot, used_at_top, out);
+      memcpy(out, ring + bot * sizeof(T), used_at_top_bytes);
       /* copy from bottom */
-      std::copy_n(ring, num - used_at_top, out + used_at_top);
+      memcpy(out + used_at_top_bytes, ring, num_bytes - used_at_top_bytes);
       bot = (bot + num) % max;
       if (bot == top) {
         bot = top = 0;
@@ -144,25 +150,26 @@ size_t ring_queue<T>::pull_range(T * __restrict__ out, size_t num) {
  duplication */
 template <typename T>
 size_t ring_queue<T>::peek_range(T * __restrict__ out, size_t num) const {
+  size_t num_bytes = num * sizeof(T);
   if (0 == num) { return 0; }
   if (is_empty) { return 0; }
   if (bot < top) {
     size_t old_size = top - bot;
     if (old_size < num) { num = old_size; }
-    std::copy_n(ring + bot, num, out);
+    memcpy(out, num_bytes, ring + bot * sizeof(T));
     return num;
   } else {
-    size_t used_at_top = max - bot;
+    size_t used_at_top = max - bot, used_at_top_bytes = used_at_top * sizeof(T);
     size_t old_size = used_at_top + top;
     if (old_size < num) { num = old_size; }
     if (used_at_top <= num) {
-      std::copy_n(ring + bot, num, out);
+      memcpy(out, ring + bot * sizeof(T), num_bytes);
     } else {
       /* used_at_top > num */
       /* copy from top */
-      std::copy_n(ring + bot, used_at_top, out);
+      memcpy(out, ring + bot * sizeof(T), used_at_top_bytes);
       /* copy from bottom */
-      std::copy_n(ring, num - used_at_top, out + used_at_top);
+      memcpy(out + used_at_top_bytes, ring, num_bytes - used_at_top_bytes);
     }
     return num;
   }
@@ -184,11 +191,11 @@ size_t ring_queue<T>::resize(size_t fin) {
   T * __restrict__ new_ring = new T[new_max];
   if (!is_empty) {
     if (bot < top) {
-      std::copy_n(ring + bot, top - bot, new_ring);
+      memcpy(new_ring, ring + bot * sizeof(T), (top - bot) * sizeof(T));
     } else {
-      size_t used_at_top = max - bot;
-      std::copy_n(ring + bot, used_at_top, new_ring);
-      std::copy_n(ring, top, new_ring + used_at_top);
+      size_t used_at_top = max - bot, used_at_top_bytes = used_at_top * sizeof(T);
+      memcpy(new_ring, ring + bot * sizeof(T), used_at_top_bytes);
+      memcpy(new_ring + used_at_top_bytes, ring, top * sizeof(T));
     }
   }
   std::swap(ring, new_ring);
